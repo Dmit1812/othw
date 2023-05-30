@@ -1,4 +1,4 @@
-module github.com/othw/hw01_hello_otus
+module github.com/Dmit1812/othw/hw01_hello_otus
 
 go 1.19
 
