@@ -3,7 +3,10 @@ package hw02unpackstring
 import (
 	"errors"
 	"strings"
+	"unicode"
 	"unicode/utf8"
+
+	"golang.org/x/text/unicode/runenames"
 )
 
 var (
@@ -31,26 +34,40 @@ const (
 
 // isDigit determines if a rune is a supported digit.
 func isDigit(r rune) bool {
-	// we consider as digits only normal and fullwidth digits
-	if r >= 0x0030 && r <= 0x0039 {
-		return true
-	}
-	if r >= 0xFF10 && r <= 0xFF19 {
-		return true
-	}
-	return false
+	return unicode.IsDigit(r)
 }
 
 // runeDigitToInt converts a rune if it is of supported types to integer
-// supported types are normal and fullwidth digits.
+// supported types are any unicode.IsDigit()
+// получается что ни strconv.Atoi(), ни strconv.ParseInt()
+// не поддерживают все цифры из алфавита utf-8
+// вот единственный способ, что удалось найти :)
 func runeDigitToInt(r rune) (int, error) {
-	if r >= 0x0030 && r <= 0x0039 {
-		return int(r - zero), nil
+	var name = runenames.Name(r)
+	switch {
+	case strings.Contains(name, "DIGIT ZERO"):
+		return 0, nil
+	case strings.Contains(name, "DIGIT ONE"):
+		return 1, nil
+	case strings.Contains(name, "DIGIT TWO"):
+		return 2, nil
+	case strings.Contains(name, "DIGIT THREE"):
+		return 3, nil
+	case strings.Contains(name, "DIGIT FOUR"):
+		return 4, nil
+	case strings.Contains(name, "DIGIT FIVE"):
+		return 5, nil
+	case strings.Contains(name, "DIGIT SIX"):
+		return 6, nil
+	case strings.Contains(name, "DIGIT SEVEN"):
+		return 7, nil
+	case strings.Contains(name, "DIGIT EIGHT"):
+		return 8, nil
+	case strings.Contains(name, "DIGIT NINE"):
+		return 9, nil
+	default:
+		return 0, ErrUnsupportedDigit
 	}
-	if r >= 0xFF10 && r <= 0xFF19 {
-		return int(r - zerofullwidth), nil
-	}
-	return 0, ErrUnsupportedDigit
 }
 
 // runeDetermineType return which type rune belongs to digit, escapecharacter or other.
