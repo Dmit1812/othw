@@ -108,6 +108,26 @@ func TestRuneDigitToInt(t *testing.T) {
 	}
 }
 
+func TestRuneDigitToIntAll(t *testing.T) {
+	t.Run("loop over all utf-8 that are digits and confirm the can be converted to int", func(t *testing.T) {
+		for i := rune(0x0000); i <= rune(0x10FFFF); i++ {
+			if isDigit(i) {
+				var resultIsADigit bool
+				result, err := runeDigitToInt(i)
+				if err == nil {
+					if result >= 0 && result <= 9 {
+						resultIsADigit = true
+					} else {
+						resultIsADigit = false
+					}
+				}
+				require.Falsef(t, errors.Is(err, ErrUnsupportedDigit), "On rune %d - actual error %q", i, err)
+				require.Truef(t, resultIsADigit, "On rune %d - conversion doesn't not yield a digit!", i)
+			}
+		}
+	})
+}
+
 func TestRuneDetermineType(t *testing.T) {
 	tests := []struct {
 		input    rune
