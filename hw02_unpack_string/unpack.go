@@ -7,10 +7,13 @@ import (
 )
 
 var (
-	ErrInvalidString    = errors.New("invalid string")
-	ErrUnsupportedDigit = errors.New("unsupported digit in rune to uint conversion")
+	ErrUnsupportedDigit = errors.New("a non supported digit or rune was used to convert to integer")
+	ErrBackslashUsage   = errors.New("there should be a backslash or a digit after a backslash")
+	ErrDigitNotInPlace  = errors.New("digits can't be used as first character or after another digit, " +
+		"consider escaping with backslash")
 )
 
+// define runeType and values we distinguish.
 type runeType uint8
 
 const (
@@ -19,12 +22,14 @@ const (
 	other
 )
 
+// define runes.
 const (
 	backslash     rune = '\\'
 	zero          rune = '0'
 	zerofullwidth rune = 0xFF10
 )
 
+// isDigit determines if a rune is a supported digit.
 func isDigit(r rune) bool {
 	// we consider as digits only normal and fullwidth digits
 	if r >= 0x0030 && r <= 0x0039 {
@@ -36,6 +41,8 @@ func isDigit(r rune) bool {
 	return false
 }
 
+// runeDigitToInt converts a rune if is of supported types to integer
+// supported types are normal and fullwidth digits.
 func runeDigitToInt(r rune) (int, error) {
 	if r >= 0x0030 && r <= 0x0039 {
 		return int(r - zero), nil
@@ -46,6 +53,7 @@ func runeDigitToInt(r rune) (int, error) {
 	return 0, ErrUnsupportedDigit
 }
 
+// runeDetermineType return which type rune belongs to digit, escapcharacter or other.
 func runeDetermineType(r rune) runeType {
 	if isDigit(r) {
 		return digit
@@ -56,6 +64,8 @@ func runeDetermineType(r rune) runeType {
 	return other
 }
 
+// Unpack decodes a string according to requirements
+// specified here: https://github.com/OtusGolang/home_work/blob/master/hw02_unpack_string/README.md .
 func Unpack(str string) (string, error) {
 	var result strings.Builder
 	var runeToWrite rune
@@ -69,17 +79,17 @@ func Unpack(str string) (string, error) {
 		case digit:
 			// if we have no previous rune and it is a digit - error
 			if !runeWaiting {
-				return "", ErrInvalidString
+				return "", ErrDigitNotInPlace
 			}
-			// write rune according to rules of digits
-			// получаем число из руны
+
+			// get a count of times to replicate a rune in result string
 			count, err := runeDigitToInt(r)
 			// сигнализируем об ошибке если была ошибка в переводе цифры в число
 			if err != nil {
-				return "", ErrInvalidString
+				return "", ErrUnsupportedDigit
 			}
 
-			// повторяем столько сколько нужно
+			// replicate rune needed number of times
 			for i := 0; i < count; i++ {
 				result.WriteRune(runeToWrite)
 			}
@@ -91,24 +101,25 @@ func Unpack(str string) (string, error) {
 				result.WriteRune(runeToWrite)
 			}
 
-			// if this is the last rune from string error as we need another for escaping
+			// if this is the last rune from string error as we need another character for escaping
 			if len(str) == size {
-				return "", ErrInvalidString
+				return "", ErrBackslashUsage
 			}
 
-			// then read next character and place it in the waiting
+			// then read next rune and determine it's type
 			str = str[size:]
 			r, size = utf8.DecodeRuneInString(str)
 
-			// if next character class is not a number or slash error
+			// if next rune class is not a number or slash - error
 			if runeDetermineType(r) == other {
-				return "", ErrInvalidString
+				return "", ErrBackslashUsage
 			}
 
-			// place the new character in the waiting
+			// place the new character in runeToWrite
 			runeToWrite = r
 			runeWaiting = true
 		case other:
+			// if we have unwritten rune write it
 			if runeWaiting {
 				// write previous character if it is there and remember next one
 				result.WriteRune(runeToWrite)
