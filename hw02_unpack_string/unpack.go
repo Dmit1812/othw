@@ -41,7 +41,7 @@ func isDigit(r rune) bool {
 	return false
 }
 
-// runeDigitToInt converts a rune if is of supported types to integer
+// runeDigitToInt converts a rune if it is of supported types to integer
 // supported types are normal and fullwidth digits.
 func runeDigitToInt(r rune) (int, error) {
 	if r >= 0x0030 && r <= 0x0039 {
@@ -53,7 +53,7 @@ func runeDigitToInt(r rune) (int, error) {
 	return 0, ErrUnsupportedDigit
 }
 
-// runeDetermineType return which type rune belongs to digit, escapcharacter or other.
+// runeDetermineType return which type rune belongs to digit, escapecharacter or other.
 func runeDetermineType(r rune) runeType {
 	if isDigit(r) {
 		return digit
@@ -84,7 +84,7 @@ func Unpack(str string) (string, error) {
 
 			// get a count of times to replicate a rune in result string
 			count, err := runeDigitToInt(r)
-			// сигнализируем об ошибке если была ошибка в переводе цифры в число
+			// report error in digit conversion if there was one
 			if err != nil {
 				return "", ErrUnsupportedDigit
 			}
