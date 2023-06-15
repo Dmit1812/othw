@@ -2,7 +2,6 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -12,12 +11,12 @@ var (
 	ErrUnsupportedDigit = errors.New("unsupported digit in rune to uint conversion")
 )
 
-type operation uint8
+type runeType uint8
 
 const (
-	getRune operation = iota
-	getRepeatCountOrWrite
-	getDigitOrSlash
+	escapecharacter runeType = iota
+	digit
+	other
 )
 
 const (
@@ -47,88 +46,83 @@ func runeDigitToInt(r rune) (int, error) {
 	return 0, ErrUnsupportedDigit
 }
 
+func runeDetermineType(r rune) runeType {
+	if isDigit(r) {
+		return digit
+	}
+	if r == backslash {
+		return escapecharacter
+	}
+	return other
+}
+
 func Unpack(str string) (string, error) {
-	var op operation
 	var result strings.Builder
 	var runeToWrite rune
 	var runeWaiting bool
-	fmt.Printf("%s\n", str)
+
 	for len(str) > 0 {
 		r, size := utf8.DecodeRuneInString(str)
-		// fmt.Printf("string: %s, runeS: %s, runeD:%d, size: %d, op: %d, runeToWrite: %s, runeWaiting: %t\n",
-		//             result.String(), string(r), r, size, op, string(runeToWrite), runeWaiting)
-		switch op {
-		case getRune:
-			if isDigit(r) {
-				// если это цифра - ошибка
+		runeClass := runeDetermineType(r)
+
+		switch runeClass {
+		case digit:
+			// if we have no previous rune and it is a digit - error
+			if !runeWaiting {
+				return "", ErrInvalidString
+			}
+			// write rune according to rules of digits
+			// получаем число из руны
+			count, err := runeDigitToInt(r)
+			// сигнализируем об ошибке если была ошибка в переводе цифры в число
+			if err != nil {
 				return "", ErrInvalidString
 			}
 
-			// Если есть руна на запись пишем
+			// повторяем столько сколько нужно
+			for i := 0; i < count; i++ {
+				result.WriteRune(runeToWrite)
+			}
+			runeWaiting = false
+		case escapecharacter:
+			// write previous character if it is there
 			if runeWaiting {
+				// write previous character if it is there and remember next one
 				result.WriteRune(runeToWrite)
 			}
 
-			// если слеш, то включаем getDigitOrSlash
-			if r == backslash {
-				op = getDigitOrSlash
-			} else {
-				runeToWrite = r
-				runeWaiting = true
-				op = getRepeatCountOrWrite
-			}
-		case getRepeatCountOrWrite:
-			// если не цифра то записываем
-			if !isDigit(r) {
-				// если есть руна на запись, пишем
-				if runeWaiting {
-					result.WriteRune(runeToWrite)
-					runeToWrite = r
-					runeWaiting = true
-					op = getRepeatCountOrWrite
-				} else {
-					return "", ErrInvalidString
-				}
-				if r == backslash {
-					// если слеш, то включаем getDigitOrSlash
-					op = getDigitOrSlash
-				}
-			} else {
-				// получаем число из руны
-				count, err := runeDigitToInt(r)
-				// сигнализируем об ошибке если была ошибка в переводе цифры в число
-				if err != nil {
-					return "", ErrInvalidString
-				}
-
-				// Если число повторений 0 не будем добавлять руну
-				if count == 0 {
-					runeWaiting = false
-				} else {
-					// иначе повторяем столько сколько нужно
-					for i := 0; i < count; i++ {
-						result.WriteRune(runeToWrite)
-					}
-					runeWaiting = false
-				}
-				op = getRune
-			}
-		case getDigitOrSlash:
-			// если цифра или слеш то добавляем в результат
-			// иначе ошибка
-			if isDigit(r) || r == backslash {
-				runeToWrite = r
-				runeWaiting = true
-			} else {
+			// if this is the last rune from string error as we need another for escaping
+			if len(str) == size {
 				return "", ErrInvalidString
 			}
-			op = getRepeatCountOrWrite
+
+			// then read next character and place it in the waiting
+			str = str[size:]
+			r, size = utf8.DecodeRuneInString(str)
+
+			// if next character class is not a number or slash error
+			if runeDetermineType(r) == other {
+				return "", ErrInvalidString
+			}
+
+			// place the new character in the waiting
+			runeToWrite = r
+			runeWaiting = true
+		case other:
+			if runeWaiting {
+				// write previous character if it is there and remember next one
+				result.WriteRune(runeToWrite)
+			}
+			runeToWrite = r
+			runeWaiting = true
 		}
 		str = str[size:]
 	}
+
 	// write the last rune if present
 	if runeWaiting {
 		result.WriteRune(runeToWrite)
 	}
+
 	return result.String(), nil
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require" //nolint:depguard
 )
 
 func TestUnpack(t *testing.T) {
@@ -36,7 +36,7 @@ func TestUnpack(t *testing.T) {
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b"}
+	invalidStrings := []string{"3abc", "45", "aaa10b", "qw\\ne", "qw\\"}
 	for _, tc := range invalidStrings {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
@@ -91,6 +91,29 @@ func TestRuneDigitToInt(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestRuneDetermineType(t *testing.T) {
+	tests := []struct {
+		input    rune
+		expected runeType
+	}{
+		{input: '0', expected: digit},
+		{input: 'a', expected: other},
+		{input: '9', expected: digit},
+		{input: '\\', expected: escapecharacter},
+		{input: 0xFF10, expected: digit},
+		{input: 0xFF19, expected: digit},
+		{input: 0xFF20, expected: other},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(string(tc.input), func(t *testing.T) {
+			result := runeDetermineType(tc.input)
 			require.Equal(t, tc.expected, result)
 		})
 	}
