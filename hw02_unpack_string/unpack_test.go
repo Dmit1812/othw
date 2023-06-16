@@ -109,7 +109,7 @@ func TestRuneDigitToInt(t *testing.T) {
 }
 
 func TestRuneDigitToIntAll(t *testing.T) {
-	t.Run("loop over all utf-8 that are digits and confirm the can be converted to int", func(t *testing.T) {
+	t.Run("loop over all utf-8 that are digits and confirm the can be converted", func(t *testing.T) {
 		for i := rune(0x0000); i <= rune(0x10FFFF); i++ {
 			if isDigit(i) {
 				var resultIsADigit bool
@@ -117,8 +117,6 @@ func TestRuneDigitToIntAll(t *testing.T) {
 				if err == nil {
 					if result >= 0 && result <= 9 {
 						resultIsADigit = true
-					} else {
-						resultIsADigit = false
 					}
 				}
 				require.Falsef(t, errors.Is(err, ErrUnsupportedDigit), "On rune %d - actual error %q", i, err)
