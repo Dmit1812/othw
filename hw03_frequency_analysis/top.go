@@ -19,7 +19,7 @@ const (
 //	"Dash punctuation" - \p{Pd} - http://www.zuga.net/articles/unicode/category/dash-punctuation/
 //
 // InWordCharacters - are defined to be "connector punctuations" and "dash punctuations"
-// NotInWordCharacters - are defined to be contain all characters that are not in InWordCharacters
+// NotInWordCharacters - are defined to contain all characters that are not in InWordCharacters
 var expr = map[string]*regexp.Regexp{
 	//WordSeparators: regexp.MustCompile(`[.,:;!?()\[\]{}"'\\/#$%&*+=]+`),
 	WordSeparators:      regexp.MustCompile(`[^[:^punct:]\p{Pc}\p{Pd}]+`),
