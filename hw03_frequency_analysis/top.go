@@ -19,6 +19,7 @@ const (
 //	"Dash punctuation" - \p{Pd} - http://www.zuga.net/articles/unicode/category/dash-punctuation/
 //
 // InWordCharacters - are defined to be "connector punctuations" and "dash punctuations"
+// NotInWordCharacters - are defined to be contain all characters that are not in InWordCharacters
 var expr = map[string]*regexp.Regexp{
 	//WordSeparators: regexp.MustCompile(`[.,:;!?()\[\]{}"'\\/#$%&*+=]+`),
 	WordSeparators:      regexp.MustCompile(`[^[:^punct:]\p{Pc}\p{Pd}]+`),
@@ -53,6 +54,7 @@ func returnFirst10AsSlice(s []WordCount) []string {
 	return result[:i]
 }
 
+// returns top 10 word occurences sorted by number of occurences as slice of strings
 func Top10(iStr string) []string {
 	// create a map to hold the result 3 times smaller then original text
 	result := make(map[string]int, len(iStr)/3)
@@ -68,13 +70,13 @@ func Top10(iStr string) []string {
 
 	// For every separate word
 	for _, s := range str {
-		// we count only if s is not empty
+		// skip any word that is empty and process further those that are not
 		if len(s) > 0 {
-			// if s has only InWordSeparator (e.g hyphen) and nothing else skip such word
+			// if word has only InWordSeparator chracters (e.g hyphen) and nothing else skip such word
 			if expr[InWordCharacters].MatchString(s) && !expr[NotInWordCharacters].MatchString(s) {
 				continue
 			}
-			//  increase the count of the word in the map
+			// increase the count of the word in the map as this word shall be counted
 			result[s]++
 		}
 	}
