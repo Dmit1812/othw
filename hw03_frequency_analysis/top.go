@@ -1,7 +1,6 @@
 package hw03frequencyanalysis
 
 import (
-	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -37,7 +36,6 @@ func mapToSlice(m map[string]int) []WordCount {
 	s := make([]WordCount, 0, len(m))
 	for k := range m {
 		s = append(s, WordCount{k, m[k]})
-		fmt.Printf("Word: %s, Count: %d\n", k, m[k])
 	}
 	return s
 }
