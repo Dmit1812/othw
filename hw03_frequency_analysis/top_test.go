@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -46,6 +46,18 @@ var text = `Как видите, он  спускается  по  лестни�
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
+	})
+
+	t.Run("all punctuation chracters of a sentence shall be ignored", func(t *testing.T) {
+		require.Len(t, Top10(`.,:;!?()[]{}"'\/#$%&*+=\`), 0)
+	})
+
+	t.Run("words that have in-word punctuation among other characters shall be kept", func(t *testing.T) {
+		require.Equal(t, Top10("a-_‿― -_a‿― -_‿―a"), []string{"-_a‿―", "-_‿―a", "a-_‿―"})
+	})
+
+	t.Run("a hyphen or any number of in-word punctuation chracters that are together without other characters shall be ignored", func(t *testing.T) {
+		require.Len(t, Top10("- - - - ― ‿ _ -_‿―"), 0)
 	})
 
 	t.Run("positive test", func(t *testing.T) {
